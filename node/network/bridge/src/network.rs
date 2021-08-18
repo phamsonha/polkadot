@@ -25,7 +25,7 @@ use futures::stream::BoxStream;
 use parity_scale_codec::Encode;
 
 use sc_network::Event as NetworkEvent;
-use sc_network::{IfDisconnected, NetworkService, OutboundFailure, RequestFailure};
+use sc_network::{IfDisconnected, NetworkService, RequestFailure};
 use sc_network::{config::parse_addr, multiaddr::Multiaddr};
 
 use polkadot_node_network_protocol::{
@@ -208,7 +208,7 @@ impl Network for Arc<NetworkService<Block, Hash>> {
 			None => {
 				tracing::debug!(target: LOG_TARGET, "Discovering authority failed");
 				match pending_response
-					.send(Err(RequestFailure::Network(OutboundFailure::DialFailure)))
+					.send(Err(RequestFailure::NotConnected))
 				{
 					Err(_) => tracing::debug!(
 						target: LOG_TARGET,

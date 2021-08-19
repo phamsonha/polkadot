@@ -2424,6 +2424,12 @@ fn issue_approval(
 		None => {
 			// not a cause for alarm - just lost a race with pruning, most likely.
 			metrics.on_approval_stale();
+			tracing::debug!(
+				target: LOG_TARGET,
+				?candidate_hash,
+				"Stale approval. Relay block hash {:?} missing.",
+                block_hash,
+			);
 			return Ok(Vec::new())
 		}
 	};
@@ -2434,7 +2440,7 @@ fn issue_approval(
 		.position(|e| e.1 == candidate_hash)
 	{
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Candidate hash {} is not present in the block entry's candidates for relay block {}",
 				candidate_hash,
@@ -2450,7 +2456,7 @@ fn issue_approval(
 	let session_info = match state.session_info(block_entry.session()) {
 		Some(s) => s,
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Missing session info for live block {} in session {}",
 				block_hash,
@@ -2465,7 +2471,7 @@ fn issue_approval(
 	let candidate_hash = match block_entry.candidate(candidate_index as usize) {
 		Some((_, h)) => h.clone(),
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Received malformed request to approve out-of-bounds candidate index {} included at block {:?}",
 				candidate_index,
@@ -2480,7 +2486,7 @@ fn issue_approval(
 	let candidate_entry = match state.db.load_candidate_entry(&candidate_hash)? {
 		Some(c) => c,
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Missing entry for candidate index {} included at block {:?}",
 				candidate_index,
@@ -2495,7 +2501,7 @@ fn issue_approval(
 	let validator_pubkey = match session_info.validators.get(validator_index.0 as usize) {
 		Some(p) => p,
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Validator index {} out of bounds in session {}",
 				validator_index.0,
@@ -2515,7 +2521,7 @@ fn issue_approval(
 	) {
 		Some(sig) => sig,
 		None => {
-			tracing::warn!(
+			tracing::debug!(
 				target: LOG_TARGET,
 				"Could not issue approval signature with validator index {} in session {}. Assignment key present but not validator key?",
 				validator_index.0,

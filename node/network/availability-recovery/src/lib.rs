@@ -439,6 +439,16 @@ impl RequestChunksPhase {
 
 				return Err(RecoveryError::Unavailable);
 			}
+            
+            tracing::debug!(
+                target: LOG_TARGET,
+                candidate_hash = ?params.candidate_hash,
+                erasure_root = ?params.erasure_root,
+                received = %self.received_chunks.len(),
+                requesting = %self.requesting_chunks.len(),
+                n_validators = %params.validators.len(),
+                "LOOPING for launch_parallel_requests.",
+            );
 
 			self.launch_parallel_requests(params, sender).await;
 			self.wait_for_chunks(params).await;
@@ -453,7 +463,7 @@ impl RequestChunksPhase {
 				) {
 					Ok(data) => {
 						if reconstructed_data_matches_root(params.validators.len(), &params.erasure_root, &data) {
-							tracing::trace!(
+							tracing::debug!(
 								target: LOG_TARGET,
 								candidate_hash = ?params.candidate_hash,
 								erasure_root = ?params.erasure_root,
@@ -462,7 +472,7 @@ impl RequestChunksPhase {
 
 							Ok(data)
 						} else {
-							tracing::trace!(
+							tracing::debug!(
 								target: LOG_TARGET,
 								candidate_hash = ?params.candidate_hash,
 								erasure_root = ?params.erasure_root,
@@ -473,7 +483,7 @@ impl RequestChunksPhase {
 						}
 					}
 					Err(err) => {
-						tracing::trace!(
+						tracing::debug!(
 							target: LOG_TARGET,
 							candidate_hash = ?params.candidate_hash,
 							erasure_root = ?params.erasure_root,
@@ -484,7 +494,17 @@ impl RequestChunksPhase {
 						Err(RecoveryError::Invalid)
 					},
 				};
-			}
+			} else {
+                tracing::debug!(
+                    target: LOG_TARGET,
+                    candidate_hash = ?params.candidate_hash,
+                    erasure_root = ?params.erasure_root,
+                    received = %self.received_chunks.len(),
+                    requesting = %self.requesting_chunks.len(),
+                    n_validators = %params.validators.len(),
+                    "Have not received enough chunks.",
+                );
+            }
 		}
 	}
 }
